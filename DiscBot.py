@@ -156,8 +156,10 @@ class MyClient(discord.Client):
                             await message.author.dm_channel.send('Please select an option from the following:')
                             await message.author.dm_channel.send(help_centers)
                             activeSessions[message.author.id]['numberOptions'] = \
-                                range(1, len(resources[activeSessions[message.author.id]["sentiment"]]))
+                                range(1, len(resources[activeSessions[message.author.id]["sentiment"]])+1)
                             activeSessions[message.author.id]['step'] = 3
+                            activeSessions[message.author.id]['resources'] = help_centers
+
                         else:
                             await message.author.dm_channel.send("OK. Feel free to message me again if you change"
                                                                  " your mind :smile:")
@@ -166,12 +168,51 @@ class MyClient(discord.Client):
                     elif activeSessions[message.author.id]['step'] == 3:
                         await message.author.create_dm()
                         try:
-                            message = int(message.content)
-                            print(message)
+                            print(message.content)
+                            message_number = int(message.content)
+                            if message_number in activeSessions[message.author.id]['numberOptions']:
+                                selected_option = list(resources[activeSessions[message.author.id]["sentiment"]].keys())\
+                                    [message_number-1]
+                                print(selected_option)
+                                if resources[activeSessions[message.author.id]["sentiment"]][selected_option]['helpline']:
+                                    message_to_send = f'You can reach the {selected_option} here: \n Website: ' \
+                                        f'{resources[activeSessions[message.author.id]["sentiment"]][selected_option]["url"]} \n ' \
+                                        f'Phone: {resources[activeSessions[message.author.id]["sentiment"]][selected_option]["helpline"]}'
+
+                                    await message.author.dm_channel.send(message_to_send)
+                                else:
+                                    message_to_send = f'You can reach the {selected_option} here: \n Website: ' \
+                                        f'{resources[activeSessions[message.author.id]["sentiment"]][selected_option]["url"]}'
+                                    await message.author.dm_channel.send(message_to_send)
+                                await message.author.dm_channel.send("Would you like the contact information for "
+                                                                     "another organization? Please enter yes/no")
+                                activeSessions[message.author.id]['step'] = 4
+
+                            else:
+                                await message.author.dm_channel.send(f"Please enter a number within the supplied range")
+
                         except Exception as e:
+                            print(e)
                             await message.author.dm_channel.send("Sorry, but that doesn't appear to be a number."
                                                                  " Please re-enter the corresponding number for your"
                                                                  " chosen site :slight_frown:")
+
+                    elif activeSessions[message.author.id]['step'] == 4:
+                        repeat_resources = False
+                        await message.author.create_dm()
+                        yes_set = {'yes', 'y', 'yeah', 'sure', 'of course', 'please'}
+                        for item in yes_set:
+                            if item in message.content:
+                                repeat_resources = True
+                                break
+                        if repeat_resources:
+                            await message.author.dm_channel.send('Please select an option from the following:')
+                            await message.author.dm_channel.send(activeSessions[message.author.id]["resources"])
+                            activeSessions[message.author.id]['step'] = 3
+                        else:
+                            await message.author.dm_channel.send("OK. Feel free to message me again if you change"
+                                                                 " your mind :smile:")
+                            activeSessions.pop(message.author.id, None)  # Delete session, dm bot for new one
 
 
     def check_sentiment(self, tokens):
@@ -198,5 +239,5 @@ class MyClient(discord.Client):
 
 
 client = MyClient()
-client.run('')
+client.run('NTc0Njk2NDExNTA2MTQ3MzM4.XlyOzg.WyJbmcnXu_Y0RcUGFYP-52225I8')
 
